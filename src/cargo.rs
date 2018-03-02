@@ -63,6 +63,7 @@ struct Artifact {
     fresh: bool,
 }
 
+#[allow(unused)]
 #[derive(Deserialize)]
 struct CargoFromCompiler {
     package_id: PackageId,
@@ -112,6 +113,7 @@ pub fn build(matches: &ArgMatches) -> Result<Vec<PathBuf>, Error> {
     for line in stdout.lines() {
         match parse_cargo_output(&line.unwrap())? {
             CargoBuildOutput::FromCompiler(from_compiler) => {
+                // TODO: Figure out how to pretty print this
                 println!("{}", serde_json::to_string(&from_compiler.message).unwrap());
             }
             CargoBuildOutput::Artifact(mut artifact) => {

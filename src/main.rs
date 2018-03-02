@@ -4,8 +4,8 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-#[allow(unused)]
 mod cargo;
+mod wasm_bindgen;
 
 use clap::{App, Arg};
 
@@ -27,9 +27,21 @@ fn main() {
         )
         .get_matches();
 
-    let artifacts = cargo::build(&matches).unwrap();
-    println!("Finished cargo build step. Found binary artifacts:");
+    let artifacts = match cargo::build(&matches) {
+        Err(_) => {
+            println!("Errors encountered during cargo build step. Aborting build.");
+            return;
+        }
+        Ok(a) => a,
+    };
+    println!("Finished cargo build step.");
+
+    wasm_bindgen::install_if_required().unwrap();
     for a in artifacts {
-        println!("{}", a.into_os_string().to_str().unwrap());
+        println!(
+            "Generate wasm-bindgen bindings for artifact: {}",
+            a.clone().into_os_string().to_str().unwrap()
+        );
+        wasm_bindgen::process_file(a).unwrap();
     }
 }
