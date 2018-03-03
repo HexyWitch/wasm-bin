@@ -7,7 +7,7 @@ use std::path::Path;
 
 use wasm_build_support::cargo;
 use cargo::WasmArtifact;
-use wasm_build_support::wasm_bindgen;
+use wasm_build_support::bindgen;
 
 #[test]
 fn build_project_simple() {
@@ -26,7 +26,7 @@ fn build_project_simple() {
         Ok(a) => a,
     };
 
-    wasm_bindgen::install_if_required(Some(true)).unwrap();
+    bindgen::install_if_required(Some(true)).unwrap();
     for a in artifacts {
         let path = match a {
             WasmArtifact::Binary(_) => {
@@ -34,8 +34,8 @@ fn build_project_simple() {
             }
             WasmArtifact::Library(path) => path,
         };
-        let generated_wasm = wasm_bindgen::generate_wasm(&path).unwrap();
-        wasm_bindgen::generate_js_module(&generated_wasm).unwrap();
+        let generated_wasm = bindgen::generate_wasm(&path).unwrap();
+        bindgen::generate_js_module(&generated_wasm).unwrap();
     }
 
     std::fs::remove_dir_all(Path::new("target")).unwrap();

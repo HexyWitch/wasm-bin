@@ -7,23 +7,34 @@ const WASM_BINDGEN_GIT_URL: &str = "https://github.com/alexcrichton/wasm-bindgen
 const WASM_BINDGEN_OUT_DIR: &str = "target/wasm-build/release/.";
 
 #[derive(Debug)]
-pub struct Error;
+pub enum Error {
+    InstallFailed,
+    InstallCommandError(io::Error),
+    BindgenFailed,
+    BindgenCommandError(io::Error),
+    GenerateModuleFailed,
+    GenerateModuleCommandError(io::Error),
+    ReadLineError(io::Error),
+    CreateTargetDirectoryError(io::Error),
+}
 
-fn prompt_confirm(text: &str) -> bool {
+fn prompt_confirm(text: &str) -> Result<bool, Error> {
     println!("{}", text);
 
     let read_in = || {
         let mut buf = String::new();
-        io::stdin().read_line(&mut buf).unwrap();
-        match buf.trim_right() {
+        io::stdin()
+            .read_line(&mut buf)
+            .map_err(Error::ReadLineError)?;
+        Ok(match buf.trim_right() {
             "y" | "Y" => Some(true),
             "n" | "N" => Some(false),
             _ => None,
-        }
+        })
     };
     loop {
-        match read_in() {
-            Some(v) => return v,
+        match read_in()? {
+            Some(v) => return Ok(v),
             _ => {}
         }
     }
@@ -40,15 +51,15 @@ pub fn install_if_required(skip_prompt: Option<bool>) -> Result<(), Error> {
         Err(e) => match e.kind() {
             io::ErrorKind::NotFound => {
                 let skip_prompt = skip_prompt.unwrap_or(false);
-                let do_install = skip_prompt || prompt_confirm("No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ");
+                let do_install = skip_prompt || prompt_confirm("No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ")?;
                 if do_install {
                     install()?;
                     Ok(())
                 } else {
-                    Err(Error)
+                    Err(Error::BindgenCommandError(e))
                 }
             }
-            _ => Err(Error),
+            _ => Err(Error::BindgenCommandError(e)),
         },
     }
 }
@@ -59,11 +70,14 @@ fn install() -> Result<(), Error> {
         .arg("--git")
         .arg(WASM_BINDGEN_GIT_URL)
         .spawn()
-        .unwrap();
+        .map_err(Error::InstallCommandError)?;
 
     match install.wait() {
-        Ok(_) => Ok(()),
-        Err(_) => Err(Error),
+        Ok(status) => match status.success() {
+            true => Ok(()),
+            false => Err(Error::InstallFailed),
+        },
+        Err(e) => Err(Error::InstallCommandError(e)),
     }
 }
 
@@ -74,9 +88,9 @@ pub fn generate_wasm(input_file: &Path) -> Result<PathBuf, Error> {
         Ok(_) => {}
         Err(e) => match e.kind() {
             io::ErrorKind::NotFound => {
-                fs::create_dir_all(&out_dir).unwrap();
+                fs::create_dir_all(&out_dir).map_err(Error::CreateTargetDirectoryError)?;
             }
-            _ => return Err(Error),
+            _ => return Err(Error::BindgenCommandError(e)),
         },
     }
 
@@ -85,11 +99,14 @@ pub fn generate_wasm(input_file: &Path) -> Result<PathBuf, Error> {
         .arg("--out-dir")
         .arg(WASM_BINDGEN_OUT_DIR)
         .spawn()
-        .unwrap();
+        .map_err(Error::BindgenCommandError)?;
 
     match bindgen.wait() {
-        Ok(_) => {}
-        Err(_) => return Err(Error),
+        Ok(status) => match status.success() {
+            true => {}
+            false => return Err(Error::BindgenFailed),
+        },
+        Err(e) => return Err(Error::BindgenCommandError(e)),
     }
 
     let mut out_file = out_dir.clone();
@@ -113,12 +130,13 @@ pub fn generate_js_module(input_file: &Path) -> Result<PathBuf, Error> {
         .arg(&out_file)
         .arg("--base64")
         .spawn()
-        .unwrap();
+        .map_err(Error::GenerateModuleCommandError)?;
 
     match wasm2es6js.wait() {
-        Ok(_) => {}
-        Err(_) => return Err(Error),
+        Ok(status) => match status.success() {
+            true => Ok(out_file),
+            false => Err(Error::GenerateModuleFailed),
+        },
+        Err(e) => Err(Error::GenerateModuleCommandError(e)),
     }
-
-    Ok(out_file)
 }

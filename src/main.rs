@@ -8,7 +8,7 @@ use clap::{App, Arg};
 
 use wasm_build_support::cargo;
 use cargo::WasmArtifact;
-use wasm_build_support::wasm_bindgen;
+use wasm_build_support::bindgen;
 
 fn main() {
     let matches = App::new("wasm-build")
@@ -43,7 +43,7 @@ fn main() {
     };
     println!("Finished cargo build step.");
 
-    wasm_bindgen::install_if_required(None).unwrap();
+    bindgen::install_if_required(None).unwrap();
     for a in artifacts {
         let (binary, path) = match a {
             WasmArtifact::Binary(path) => (true, path),
@@ -53,10 +53,10 @@ fn main() {
             "Generate wasm-bindgen bindings for artifact: {}",
             path.clone().into_os_string().to_str().unwrap()
         );
-        let generated_wasm = wasm_bindgen::generate_wasm(&path).unwrap();
+        let generated_wasm = bindgen::generate_wasm(&path).unwrap();
 
         println!("Bundle wasm into a js module");
-        wasm_bindgen::generate_js_module(&generated_wasm).unwrap();
+        bindgen::generate_js_module(&generated_wasm).unwrap();
 
         if binary {
             // Produce a bundled html file
