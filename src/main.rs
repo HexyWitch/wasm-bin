@@ -43,7 +43,7 @@ fn main() {
     };
     println!("Finished cargo build step.");
 
-    wasm_bindgen::install_if_required().unwrap();
+    wasm_bindgen::install_if_required(None).unwrap();
     for a in artifacts {
         let (binary, path) = match a {
             WasmArtifact::Binary(path) => (true, path),

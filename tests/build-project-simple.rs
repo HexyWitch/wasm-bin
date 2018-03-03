@@ -26,7 +26,7 @@ fn build_project_simple() {
         Ok(a) => a,
     };
 
-    wasm_bindgen::install_if_required().unwrap();
+    wasm_bindgen::install_if_required(Some(true)).unwrap();
     for a in artifacts {
         let path = match a {
             WasmArtifact::Binary(_) => {

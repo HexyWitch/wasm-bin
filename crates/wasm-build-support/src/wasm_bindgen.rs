@@ -29,7 +29,7 @@ fn prompt_confirm(text: &str) -> bool {
     }
 }
 
-pub fn install_if_required() -> Result<(), Error> {
+pub fn install_if_required(skip_prompt: Option<bool>) -> Result<(), Error> {
     // check if wasm-bindgen CLI tool is installed, if not, ask the user to install it
     match Command::new("wasm-bindgen")
         .arg("-h")
@@ -39,7 +39,8 @@ pub fn install_if_required() -> Result<(), Error> {
         Ok(_) => Ok(()),
         Err(e) => match e.kind() {
             io::ErrorKind::NotFound => {
-                let do_install = prompt_confirm("No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ");
+                let skip_prompt = skip_prompt.unwrap_or(false);
+                let do_install = skip_prompt || prompt_confirm("No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ");
                 if do_install {
                     install()?;
                     Ok(())
