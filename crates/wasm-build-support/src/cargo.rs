@@ -187,7 +187,6 @@ pub enum WasmArtifact {
 pub fn build(options: &BuildOptions) -> Result<Vec<WasmArtifact>, Error> {
     let mut cmd = Command::new("cargo");
     cmd.stdout(Stdio::piped())
-        .stderr(Stdio::piped())
         .arg("build")
         .arg("--target=wasm32-unknown-unknown")
         .arg("--release")
