@@ -1,13 +1,14 @@
 extern crate clap;
 extern crate serde;
-#[macro_use]
-extern crate serde_derive;
 extern crate serde_json;
 
-mod cargo;
-mod wasm_bindgen;
+extern crate wasm_build_support;
 
 use clap::{App, Arg};
+
+use wasm_build_support::cargo;
+use cargo::WasmArtifact;
+use wasm_build_support::wasm_bindgen;
 
 fn main() {
     let matches = App::new("wasm-build")
@@ -27,10 +28,16 @@ fn main() {
         )
         .get_matches();
 
-    let artifacts = match cargo::build(&matches) {
+    let mut cargo_options = cargo::BuildOptions::default();
+    if let Some(bin) = matches.value_of("bin") {
+        cargo_options.bin = Some(bin.to_string());
+    }
+    if let Some(features) = matches.value_of("features") {
+        cargo_options.features = Some(features.to_string());
+    }
+    let artifacts = match cargo::build(&cargo_options) {
         Err(_) => {
-            println!("Errors encountered during cargo build step. Aborting build.");
-            return;
+            panic!("Errors encountered during cargo build step. Aborting build.");
         }
         Ok(a) => a,
     };
@@ -38,13 +45,23 @@ fn main() {
 
     wasm_bindgen::install_if_required().unwrap();
     for a in artifacts {
+        let (binary, path) = match a {
+            WasmArtifact::Binary(path) => (true, path),
+            WasmArtifact::Library(path) => (false, path),
+        };
         println!(
             "Generate wasm-bindgen bindings for artifact: {}",
-            a.clone().into_os_string().to_str().unwrap()
+            path.clone().into_os_string().to_str().unwrap()
         );
-        let generated_wasm = wasm_bindgen::generate_wasm(&a).unwrap();
+        let generated_wasm = wasm_bindgen::generate_wasm(&path).unwrap();
 
         println!("Bundle wasm into a js module");
         wasm_bindgen::generate_js_module(&generated_wasm).unwrap();
+
+        if binary {
+            // Produce a bundled html file
+        } else {
+            // Produce an es6 js module
+        }
     }
 }

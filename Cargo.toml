@@ -3,8 +3,17 @@ name = "wasm-build"
 version = "0.1.0"
 authors = ["William Lundstedt <bananavice@gmail.com>"]
 
+[workspace]
+members = [
+    "crates/wasm-build-support"
+]
+exclude = [
+    "test-project-simple"
+]
+
 [dependencies]
 serde = "*"
 serde_json = "*"
 serde_derive = "*"
 clap = "*"
+wasm_build_support = { path = "./crates/wasm-build-support" }
