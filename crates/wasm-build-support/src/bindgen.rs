@@ -4,7 +4,7 @@ use std::process::{Command, Stdio};
 use std::path::{Path, PathBuf};
 
 const WASM_BINDGEN_GIT_URL: &str = "https://github.com/alexcrichton/wasm-bindgen";
-const WASM_BINDGEN_OUT_DIR: &str = "target/wasm-build/release/.";
+const WASM_BINDGEN_OUT_DIR: &str = "./target/wasm-build/release";
 
 #[derive(Debug)]
 pub enum Error {
