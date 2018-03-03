@@ -42,6 +42,9 @@ fn main() {
             "Generate wasm-bindgen bindings for artifact: {}",
             a.clone().into_os_string().to_str().unwrap()
         );
-        wasm_bindgen::process_file(a).unwrap();
+        let generated_wasm = wasm_bindgen::generate_wasm(&a).unwrap();
+
+        println!("Bundle wasm into a js module");
+        wasm_bindgen::generate_js_module(&generated_wasm).unwrap();
     }
 }

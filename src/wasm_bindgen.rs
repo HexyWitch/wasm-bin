@@ -4,7 +4,7 @@ use std::process::{Command, Stdio};
 use std::path::{Path, PathBuf};
 
 const WASM_BINDGEN_GIT_URL: &str = "https://github.com/alexcrichton/wasm-bindgen";
-const WASM_BINDGEN_OUT_DIR: &str = "target/wasm-build/release/";
+const WASM_BINDGEN_OUT_DIR: &str = "target/wasm-build/release/.";
 
 #[derive(Debug)]
 pub struct Error;
@@ -66,28 +66,58 @@ fn install() -> Result<(), Error> {
     }
 }
 
-pub fn process_file(file: PathBuf) -> Result<(), Error> {
+pub fn generate_wasm(input_file: &Path) -> Result<PathBuf, Error> {
     // Create target directory if it doesn't exist
-    let path = Path::new(WASM_BINDGEN_OUT_DIR);
-    match fs::read_dir(path) {
+    let out_dir = PathBuf::from(WASM_BINDGEN_OUT_DIR);
+    match fs::read_dir(&out_dir) {
         Ok(_) => {}
         Err(e) => match e.kind() {
             io::ErrorKind::NotFound => {
-                fs::create_dir_all(path).unwrap();
+                fs::create_dir_all(&out_dir).unwrap();
             }
             _ => return Err(Error),
         },
     }
 
     let mut bindgen = Command::new("wasm-bindgen")
-        .arg(file.into_os_string().to_str().unwrap())
+        .arg(&input_file)
         .arg("--out-dir")
         .arg(WASM_BINDGEN_OUT_DIR)
         .spawn()
         .unwrap();
 
     match bindgen.wait() {
-        Ok(_) => Ok(()),
-        Err(_) => Err(Error),
+        Ok(_) => {}
+        Err(_) => return Err(Error),
     }
+
+    let mut out_file = out_dir.clone();
+    out_file.push(input_file.file_name().unwrap());
+    out_file.set_extension("");
+    let file_name = out_file.file_name().unwrap().to_str().unwrap().to_string();
+    out_file.set_file_name(format!("{}_wasm.wasm", file_name));
+    println!("{:?}", out_file);
+    Ok(out_file)
+}
+
+pub fn generate_js_module(input_file: &Path) -> Result<PathBuf, Error> {
+    let out_file = {
+        let mut path = input_file.to_path_buf();
+        path.set_extension("js");
+        path
+    };
+    let mut wasm2es6js = Command::new("wasm2es6js")
+        .arg(input_file)
+        .arg("-o")
+        .arg(&out_file)
+        .arg("--base64")
+        .spawn()
+        .unwrap();
+
+    match wasm2es6js.wait() {
+        Ok(_) => {}
+        Err(_) => return Err(Error),
+    }
+
+    Ok(out_file)
 }
