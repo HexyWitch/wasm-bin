@@ -3,7 +3,7 @@ Tool for building and packaging rust wasm projects, using wasm-bindgen for gener
 
 [![Build Status](https://travis-ci.org/Healthire/wasm-build.svg?branch=master)](https://travis-ci.org/Healthire/wasm-build)
 
-This tool is intended to be used in conjunction with [wasm-bindgen)(https://github.com/alexcrichton/wasm-bindgen). Its primary intended use is to package and run wasm modules produced by wasm-bindgen in a web browser context.
+This tool is intended to be used in conjunction with [wasm-bindgen](https://github.com/alexcrichton/wasm-bindgen). Its primary intended use is to package and run wasm modules produced by wasm-bindgen in a web browser context.
 
 ## Work In Progress
 
