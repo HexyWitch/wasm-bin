@@ -14,3 +14,13 @@ extern "C" {
 pub extern "C" fn greet(name: &str) {
     alert(&format!("Hello, {}!", name));
 }
+
+#[wasm_bindgen]
+#[no_mangle]
+pub extern "C" fn web_main() {
+    main();
+}
+
+fn main() {
+    alert("Woop");
+}

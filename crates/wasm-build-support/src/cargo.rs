@@ -16,6 +16,7 @@ pub enum Error {
     CaptureStdoutError,
     StdoutLineError(io::Error),
     SerializeMessageError(serde_json::error::Error),
+    UnexpectedFileCountError,
 }
 
 pub struct BuildOptions {
@@ -179,8 +180,8 @@ fn parse_cargo_output(line: &str) -> Result<CargoBuildOutput, (Error)> {
 
 #[derive(Clone)]
 pub enum WasmArtifact {
-    Binary(PathBuf),
-    Library(PathBuf),
+    Binary(String, PathBuf),
+    Library(String, PathBuf),
 }
 
 // Returns a list of paths to binary wasm artifacts produced by the cargo build command
@@ -235,18 +236,19 @@ pub fn build(options: &BuildOptions) -> Result<Vec<WasmArtifact>, Error> {
                 }
             }
             CargoBuildOutput::Artifact(mut artifact) => {
+                if artifact.filenames.len() != 1 {
+                    return Err(Error::UnexpectedFileCountError);
+                }
                 if artifact.target.kind.contains(&bin_id) {
-                    artifacts.append(&mut artifact
-                        .filenames
-                        .into_iter()
-                        .map(WasmArtifact::Binary)
-                        .collect());
+                    artifacts.push(WasmArtifact::Binary(
+                        artifact.target.name,
+                        artifact.filenames.pop().unwrap(),
+                    ));
                 } else if artifact.target.kind.contains(&lib_id) {
-                    artifacts.append(&mut artifact
-                        .filenames
-                        .into_iter()
-                        .map(WasmArtifact::Library)
-                        .collect());
+                    artifacts.push(WasmArtifact::Library(
+                        artifact.target.name,
+                        artifact.filenames.pop().unwrap(),
+                    ));
                 }
             }
             CargoBuildOutput::BuildScript(_) => {}

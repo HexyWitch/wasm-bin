@@ -3,8 +3,13 @@ use std::fs;
 use std::process::{Command, Stdio};
 use std::path::{Path, PathBuf};
 
+use util;
+use util::prompt_confirm;
+
 const WASM_BINDGEN_GIT_URL: &str = "https://github.com/alexcrichton/wasm-bindgen";
 const WASM_BINDGEN_OUT_DIR: &str = "./target/wasm-build/release";
+const INSTALL_PROMPT: &str =
+    "No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ";
 
 #[derive(Debug)]
 pub enum Error {
@@ -14,30 +19,8 @@ pub enum Error {
     BindgenCommandError(io::Error),
     GenerateModuleFailed,
     GenerateModuleCommandError(io::Error),
-    ReadLineError(io::Error),
+    PromptError(util::Error),
     CreateTargetDirectoryError(io::Error),
-}
-
-fn prompt_confirm(text: &str) -> Result<bool, Error> {
-    println!("{}", text);
-
-    let read_in = || {
-        let mut buf = String::new();
-        io::stdin()
-            .read_line(&mut buf)
-            .map_err(Error::ReadLineError)?;
-        Ok(match buf.trim_right() {
-            "y" | "Y" => Some(true),
-            "n" | "N" => Some(false),
-            _ => None,
-        })
-    };
-    loop {
-        match read_in()? {
-            Some(v) => return Ok(v),
-            _ => {}
-        }
-    }
 }
 
 pub fn install_if_required(skip_prompt: Option<bool>) -> Result<(), Error> {
@@ -51,7 +34,8 @@ pub fn install_if_required(skip_prompt: Option<bool>) -> Result<(), Error> {
         Err(e) => match e.kind() {
             io::ErrorKind::NotFound => {
                 let skip_prompt = skip_prompt.unwrap_or(false);
-                let do_install = skip_prompt || prompt_confirm("No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ")?;
+                let do_install =
+                    skip_prompt || prompt_confirm(INSTALL_PROMPT).map_err(Error::PromptError)?;
                 if do_install {
                     install()?;
                     Ok(())
@@ -81,9 +65,10 @@ fn install() -> Result<(), Error> {
     }
 }
 
-pub fn generate_wasm(input_file: &Path) -> Result<PathBuf, Error> {
+pub fn generate_wasm(target_name: &str, input_file: &Path) -> Result<PathBuf, Error> {
     // Create target directory if it doesn't exist
-    let out_dir = PathBuf::from(WASM_BINDGEN_OUT_DIR);
+    let mut out_dir = PathBuf::from(WASM_BINDGEN_OUT_DIR);
+    out_dir.push(target_name);
     match fs::read_dir(&out_dir) {
         Ok(_) => {}
         Err(e) => match e.kind() {
@@ -97,7 +82,7 @@ pub fn generate_wasm(input_file: &Path) -> Result<PathBuf, Error> {
     let mut bindgen = Command::new("wasm-bindgen")
         .arg(&input_file)
         .arg("--out-dir")
-        .arg(WASM_BINDGEN_OUT_DIR)
+        .arg(&out_dir)
         .spawn()
         .map_err(Error::BindgenCommandError)?;
 
@@ -109,34 +94,7 @@ pub fn generate_wasm(input_file: &Path) -> Result<PathBuf, Error> {
         Err(e) => return Err(Error::BindgenCommandError(e)),
     }
 
-    let mut out_file = out_dir.clone();
-    out_file.push(input_file.file_name().unwrap());
-    out_file.set_extension("");
-    let file_name = out_file.file_name().unwrap().to_str().unwrap().to_string();
-    out_file.set_file_name(format!("{}_wasm.wasm", file_name));
-    println!("{:?}", out_file);
+    let mut out_file = out_dir;
+    out_file.push(format!("{}_wasm.wasm", target_name));
     Ok(out_file)
-}
-
-pub fn generate_js_module(input_file: &Path) -> Result<PathBuf, Error> {
-    let out_file = {
-        let mut path = input_file.to_path_buf();
-        path.set_extension("js");
-        path
-    };
-    let mut wasm2es6js = Command::new("wasm2es6js")
-        .arg(input_file)
-        .arg("-o")
-        .arg(&out_file)
-        .arg("--base64")
-        .spawn()
-        .map_err(Error::GenerateModuleCommandError)?;
-
-    match wasm2es6js.wait() {
-        Ok(status) => match status.success() {
-            true => Ok(out_file),
-            false => Err(Error::GenerateModuleFailed),
-        },
-        Err(e) => Err(Error::GenerateModuleCommandError(e)),
-    }
 }

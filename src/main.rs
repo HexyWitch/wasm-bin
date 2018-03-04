@@ -9,6 +9,7 @@ use clap::{App, Arg};
 use wasm_build_support::cargo;
 use cargo::WasmArtifact;
 use wasm_build_support::bindgen;
+use wasm_build_support::webpack;
 
 fn main() {
     let matches = App::new("wasm-build")
@@ -43,25 +44,21 @@ fn main() {
     };
     println!("Finished cargo build step.");
 
-    bindgen::install_if_required(None).unwrap();
+    bindgen::install_if_required(Some(true)).unwrap();
+    let mut bins = Vec::new();
     for a in artifacts {
-        let (binary, path) = match a {
-            WasmArtifact::Binary(path) => (true, path),
-            WasmArtifact::Library(path) => (false, path),
+        let (binary, target, path) = match a {
+            WasmArtifact::Binary(target, path) => (true, target, path),
+            WasmArtifact::Library(target, path) => (false, target, path),
         };
-        println!(
-            "Generate wasm-bindgen bindings for artifact: {}",
-            path.clone().into_os_string().to_str().unwrap()
-        );
-        let generated_wasm = bindgen::generate_wasm(&path).unwrap();
-
-        println!("Bundle wasm into a js module");
-        bindgen::generate_js_module(&generated_wasm).unwrap();
-
+        let target_dir = bindgen::generate_wasm(&target, &path).unwrap();
         if binary {
-            // Produce a bundled html file
-        } else {
-            // Produce an es6 js module
+            bins.push((target, target_dir));
         }
+    }
+
+    webpack::install_if_required(true).unwrap();
+    for (target, path) in bins {
+        webpack::package_bin(&target, &path).unwrap();
     }
 }

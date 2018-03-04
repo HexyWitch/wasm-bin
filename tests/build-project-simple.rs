@@ -4,10 +4,12 @@ extern crate serde_json;
 extern crate wasm_build_support;
 
 use std::path::Path;
+use std::fs;
 
 use wasm_build_support::cargo;
 use cargo::WasmArtifact;
 use wasm_build_support::bindgen;
+use wasm_build_support::webpack;
 
 #[test]
 fn build_project_simple() {
@@ -15,7 +17,6 @@ fn build_project_simple() {
     std::env::set_current_dir(project_dir).expect("Error setting working directory");
 
     let mut cargo_options = cargo::BuildOptions::default();
-    cargo_options.lib = true;
     let artifacts = match cargo::build(&cargo_options) {
         Err(e) => {
             panic!(
@@ -27,16 +28,23 @@ fn build_project_simple() {
     };
 
     bindgen::install_if_required(Some(true)).unwrap();
+    let mut bins = Vec::new();
     for a in artifacts {
-        let path = match a {
-            WasmArtifact::Binary(_) => {
-                panic!("Found binary in crate build-project simple");
-            }
-            WasmArtifact::Library(path) => path,
+        let (binary, target, path) = match a {
+            WasmArtifact::Binary(target, path) => (true, target, path),
+            WasmArtifact::Library(target, path) => (false, target, path),
         };
-        let generated_wasm = bindgen::generate_wasm(&path).unwrap();
-        bindgen::generate_js_module(&generated_wasm).unwrap();
+        let target_dir = bindgen::generate_wasm(&target, &path).unwrap();
+        if binary {
+            bins.push((target, target_dir));
+        }
     }
 
-    std::fs::remove_dir_all(Path::new("target")).unwrap();
+    webpack::install_if_required(true).unwrap();
+    for (target, path) in bins {
+        webpack::package_bin(&target, &path).unwrap();
+    }
+
+    // fs::remove_dir_all(Path::new("./target/wasm-build"));
+    // fs::remove_dir_all(Path::new("./target/wasm32-unknown-unknown"));
 }

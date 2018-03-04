@@ -3,10 +3,5 @@ name = "test_project_simple"
 version = "0.1.0"
 authors = ["William Lundstedt <bananavice@gmail.com>"]
 
-[lib]
-name = "test_project_simple"
-path = "src/lib.rs"
-crate-type = ["cdylib"]
-
 [dependencies]
 wasm-bindgen = { git = 'https://github.com/alexcrichton/wasm-bindgen' }
