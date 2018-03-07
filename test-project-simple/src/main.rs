@@ -1,4 +1,5 @@
 #![feature(proc_macro)]
+#![no_main]
 
 extern crate wasm_bindgen;
 
@@ -10,17 +11,11 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-#[no_mangle]
 pub extern "C" fn greet(name: &str) {
     alert(&format!("Hello, {}!", name));
 }
 
 #[wasm_bindgen]
-#[no_mangle]
-pub extern "C" fn web_main() {
-    main();
-}
-
-fn main() {
+pub fn main() {
     alert("Woop");
 }

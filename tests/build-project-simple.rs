@@ -18,14 +18,12 @@ fn build_project_simple() {
 
     let mut cargo_options = cargo::BuildOptions::default();
     let artifacts = match cargo::build(&cargo_options) {
-        Err(e) => {
-            panic!(
-                "Errors encountered during cargo build step. Aborting build. {:?}",
-                e
-            );
+        Err(_) => {
+            panic!("Errors encountered during cargo build step. Aborting build.");
         }
         Ok(a) => a,
     };
+    println!("Finished cargo build step.");
 
     bindgen::install_if_required(Some(true)).unwrap();
     let mut bins = Vec::new();
@@ -34,9 +32,9 @@ fn build_project_simple() {
             WasmArtifact::Binary(target, path) => (true, target, path),
             WasmArtifact::Library(target, path) => (false, target, path),
         };
-        let target_dir = bindgen::generate_wasm(&target, &path).unwrap();
+        let (js_out, _) = bindgen::generate(&target, &path).unwrap();
         if binary {
-            bins.push((target, target_dir));
+            bins.push((target, js_out));
         }
     }
 

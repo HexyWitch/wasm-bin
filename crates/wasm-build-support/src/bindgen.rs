@@ -65,7 +65,7 @@ fn install() -> Result<(), Error> {
     }
 }
 
-pub fn generate_wasm(target_name: &str, input_file: &Path) -> Result<PathBuf, Error> {
+pub fn generate(target_name: &str, input_file: &Path) -> Result<(PathBuf, PathBuf), Error> {
     // Create target directory if it doesn't exist
     let mut out_dir = PathBuf::from(WASM_BINDGEN_OUT_DIR);
     out_dir.push(target_name);
@@ -94,7 +94,9 @@ pub fn generate_wasm(target_name: &str, input_file: &Path) -> Result<PathBuf, Er
         Err(e) => return Err(Error::BindgenCommandError(e)),
     }
 
-    let mut out_file = out_dir;
-    out_file.push(format!("{}_wasm.wasm", target_name));
-    Ok(out_file)
+    let mut js_out = out_dir.clone();
+    js_out.push(format!("{}.js", target_name));
+    let mut wasm_out = out_dir;
+    wasm_out.push(format!("{}_bg.wasm", target_name));
+    Ok((js_out, wasm_out))
 }

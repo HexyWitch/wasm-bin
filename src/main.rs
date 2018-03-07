@@ -51,9 +51,9 @@ fn main() {
             WasmArtifact::Binary(target, path) => (true, target, path),
             WasmArtifact::Library(target, path) => (false, target, path),
         };
-        let target_dir = bindgen::generate_wasm(&target, &path).unwrap();
+        let (js_out, _) = bindgen::generate(&target, &path).unwrap();
         if binary {
-            bins.push((target, target_dir));
+            bins.push((target, js_out));
         }
     }
 
