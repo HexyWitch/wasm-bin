@@ -34,5 +34,11 @@ fn main() {
         build_options.features = Some(features.to_string());
     }
 
-    build::build(&build_options).unwrap();
+    for target in build::build(&build_options).unwrap() {
+        let type_name = match target.ty {
+            build::PackageType::Binary => "binary",
+            build::PackageType::Library => "library",
+        };
+        println!("wasm-build: Packaged {} target '{}' to: {}", type_name, target.name, target.path.as_os_str().to_str().unwrap());
+    }
 }

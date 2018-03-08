@@ -2,7 +2,7 @@ use std::io;
 use std::io::Write;
 use std::fs;
 use std::fs::File;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::path::{Path, PathBuf};
 
 use util;
@@ -120,7 +120,7 @@ fn install() -> Result<(), Error> {
     }
 }
 
-fn create_js_index(target_name: &str, dir: &Path) -> Result<(), Error> {
+fn create_js_index(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
     let content = format!(
         r#"
         void async function () {{
@@ -137,10 +137,10 @@ fn create_js_index(target_name: &str, dir: &Path) -> Result<(), Error> {
         .map_err(Error::WriteHtmlIndexError)?;
     js_index.flush().map_err(Error::WriteHtmlIndexError)?;
 
-    Ok(())
+    Ok(js_path)
 }
 
-fn create_html_index(target_name: &str, dir: &Path) -> Result<(), Error> {
+fn create_html_index(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
     let content = format!(
         r#"
         <html>
@@ -162,47 +162,48 @@ fn create_html_index(target_name: &str, dir: &Path) -> Result<(), Error> {
         .map_err(Error::WriteHtmlIndexError)?;
     html_index.flush().map_err(Error::WriteHtmlIndexError)?;
 
-    Ok(())
+    Ok(html_path)
 }
 
-pub fn package_bin(target_name: &str, path: &Path) -> Result<PathBuf, Error> {
-    let build_dir = path.with_file_name("");
-    create_js_index(target_name, &build_dir)?;
-
-    let mut out_dir = build_dir.to_path_buf();
+pub fn package(target_name: &str, entry: &Path) -> Result<PathBuf, Error> {
+    let mut out_dir = entry.with_file_name("");
     out_dir.push("dist");
 
     // Remove dist folder if it already exists
     match fs::remove_dir_all(&out_dir) {
         Err(e) => match e.kind() {
-            io::ErrorKind::NotFound => {},
-            _ => return Err(Error::RemoveExistingDistError(e))
+            io::ErrorKind::NotFound => {}
+            _ => return Err(Error::RemoveExistingDistError(e)),
         },
         _ => {}
     }
-    
-    let out_file: PathBuf = [&out_dir, Path::new(&format!("{}.js", target_name))]
-        .iter()
-        .collect();
+
+    let out_file: PathBuf = [&out_dir, Path::new(&format!("{}.js", target_name))].iter().collect();
     // Package the js index file into a bundle
     match webpack_command()
-        .arg(path.with_file_name("index.js"))
+        .stdout(Stdio::piped())
+        .arg(entry)
         .arg("--output")
         .arg(&out_file)
         .arg("--mode")
         .arg("development")
         .output()
     {
-        Ok(output) => match output.status.success() {
-            true => {
-                println!("{}", String::from_utf8_lossy(&output.stdout));
-            }
-            false => return Err(Error::PackageFailed),
+        Ok(output) => if !output.status.success() {
+            println!("{}", String::from_utf8_lossy(&output.stdout));
+            return Err(Error::PackageFailed);
         },
         Err(e) => return Err(Error::PackageCommandError(e)),
     }
 
-    create_html_index(target_name, &out_dir)?;
+    Ok(out_dir)
+}
 
-    Ok(out_file)
+pub fn package_bin(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
+    let js_index = create_js_index(target_name, &dir)?;
+
+    let out_dir = package(target_name, &js_index)?;
+
+    let html_index = create_html_index(target_name, &out_dir)?;
+    Ok(html_index)
 }

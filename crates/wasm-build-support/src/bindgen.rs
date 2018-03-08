@@ -80,13 +80,15 @@ pub fn generate(target_name: &str, input_file: &Path) -> Result<(PathBuf, PathBu
             _ => return Err(Error::BindgenCommandError(e)),
         },
     }
-    println!("Wasm bindgen from {:?} to {:?}", input_file, out_dir);
+
     let retry = match Command::new("wasm-bindgen")
         .arg(&input_file)
         .arg("--out-dir")
         .arg(&out_dir)
         .spawn()
-        .map_err(Error::BindgenCommandError)?.wait() {
+        .map_err(Error::BindgenCommandError)?
+        .wait()
+    {
         Ok(status) => !status.success(),
         Err(e) => return Err(Error::BindgenCommandError(e)),
     };
@@ -96,17 +98,19 @@ pub fn generate(target_name: &str, input_file: &Path) -> Result<(PathBuf, PathBu
     if retry {
         println!("wasm-build: wasm-bindgen failed, try installing latest version of wasm-bindgen");
         install()?;
-        
+
         match Command::new("wasm-bindgen")
-        .arg(&input_file)
-        .arg("--out-dir")
-        .arg(&out_dir)
-        .spawn()
-        .map_err(Error::BindgenCommandError)?.wait() {
+            .arg(&input_file)
+            .arg("--out-dir")
+            .arg(&out_dir)
+            .spawn()
+            .map_err(Error::BindgenCommandError)?
+            .wait()
+        {
             Ok(status) => if !status.success() {
-                return Err(Error::BindgenFailed)
+                return Err(Error::BindgenFailed);
             },
-            Err(e) => return Err(Error::BindgenCommandError(e))
+            Err(e) => return Err(Error::BindgenCommandError(e)),
         }
     }
 
