@@ -12,5 +12,7 @@ fn build_project_simple() {
     let project_dir = Path::new("./tests/test-project-simple");
     std::env::set_current_dir(project_dir).expect("Error setting working directory");
 
-    build::build(&build::Options::default()).unwrap();
+    let mut options = build::Options::default();
+    options.manifest_path = Some("_Cargo.toml".to_string());
+    build::build(&options).unwrap();
 }

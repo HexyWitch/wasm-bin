@@ -1,4 +1,5 @@
 /tests/test-project-simple/target
 /target
+Cargo.lock
 /node_modules
 **/*.rs.bk

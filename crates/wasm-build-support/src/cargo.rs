@@ -22,6 +22,7 @@ pub enum Error {
 pub struct BuildOptions {
     pub bin: Option<String>,
     pub features: Option<String>,
+    pub manifest_path: Option<String>,
 }
 
 impl Default for BuildOptions {
@@ -29,6 +30,7 @@ impl Default for BuildOptions {
         BuildOptions {
             bin: None,
             features: None,
+            manifest_path: None,
         }
     }
 }
@@ -196,6 +198,9 @@ pub fn build(options: &BuildOptions) -> Result<Vec<WasmArtifact>, Error> {
     }
     if let Some(ref features) = options.features {
         cmd.arg("--features").arg(features);
+    }
+    if let Some(ref manifest_path) = options.manifest_path {
+        cmd.arg("--manifest-path").arg(manifest_path);
     }
 
     let child = cmd.spawn().map_err(|e| Error::RunCommandError(e))?;
