@@ -13,7 +13,7 @@ use wasm_build_support::webpack;
 
 #[test]
 fn build_project_simple() {
-    let project_dir = Path::new("./test-project-simple");
+    let project_dir = Path::new("./examples/test-project-simple");
     std::env::set_current_dir(project_dir).expect("Error setting working directory");
 
     let mut cargo_options = cargo::BuildOptions::default();

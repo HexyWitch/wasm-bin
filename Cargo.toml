@@ -8,7 +8,7 @@ members = [
     "crates/wasm-build-support"
 ]
 exclude = [
-    "test-project-simple"
+    "examples/test-project-simple"
 ]
 
 [dependencies]
