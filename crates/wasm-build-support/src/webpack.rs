@@ -99,6 +99,7 @@ pub fn install_if_required(skip_prompt: bool) -> Result<(), Error> {
 }
 
 fn install() -> Result<(), Error> {
+    println!("wasm-build: Installing webpack");
     match yarn_command()
         .arg("global")
         .arg("add")

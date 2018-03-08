@@ -20,7 +20,6 @@ pub enum Error {
 }
 
 pub struct BuildOptions {
-    pub lib: bool,
     pub bin: Option<String>,
     pub features: Option<String>,
 }
@@ -28,7 +27,6 @@ pub struct BuildOptions {
 impl Default for BuildOptions {
     fn default() -> BuildOptions {
         BuildOptions {
-            lib: false,
             bin: None,
             features: None,
         }
@@ -193,9 +191,6 @@ pub fn build(options: &BuildOptions) -> Result<Vec<WasmArtifact>, Error> {
         .arg("--release")
         .args(&["--message-format", "json"]);
 
-    if options.lib {
-        cmd.arg("--lib");
-    }
     if let Some(ref bin) = options.bin {
         cmd.arg("--bin").arg(bin);
     }

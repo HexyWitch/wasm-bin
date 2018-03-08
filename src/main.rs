@@ -6,10 +6,7 @@ extern crate wasm_build_support;
 
 use clap::{App, Arg};
 
-use wasm_build_support::cargo;
-use cargo::WasmArtifact;
-use wasm_build_support::bindgen;
-use wasm_build_support::webpack;
+use wasm_build_support::build;
 
 fn main() {
     let matches = App::new("wasm-build")
@@ -29,36 +26,13 @@ fn main() {
         )
         .get_matches();
 
-    let mut cargo_options = cargo::BuildOptions::default();
+    let mut build_options = build::Options::default();
     if let Some(bin) = matches.value_of("bin") {
-        cargo_options.bin = Some(bin.to_string());
+        build_options.bin = Some(bin.to_string());
     }
     if let Some(features) = matches.value_of("features") {
-        cargo_options.features = Some(features.to_string());
-    }
-    let artifacts = match cargo::build(&cargo_options) {
-        Err(_) => {
-            panic!("Errors encountered during cargo build step. Aborting build.");
-        }
-        Ok(a) => a,
-    };
-    println!("Finished cargo build step.");
-
-    bindgen::install_if_required(Some(true)).unwrap();
-    let mut bins = Vec::new();
-    for a in artifacts {
-        let (binary, target, path) = match a {
-            WasmArtifact::Binary(target, path) => (true, target, path),
-            WasmArtifact::Library(target, path) => (false, target, path),
-        };
-        let (js_out, _) = bindgen::generate(&target, &path).unwrap();
-        if binary {
-            bins.push((target, js_out));
-        }
+        build_options.features = Some(features.to_string());
     }
 
-    webpack::install_if_required(true).unwrap();
-    for (target, path) in bins {
-        webpack::package_bin(&target, &path).unwrap();
-    }
+    build::build(&build_options).unwrap();
 }

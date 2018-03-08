@@ -49,10 +49,12 @@ pub fn install_if_required(skip_prompt: Option<bool>) -> Result<(), Error> {
 }
 
 fn install() -> Result<(), Error> {
+    println!("wasm-build: Install wasm-bindgen");
     let mut install = Command::new("cargo")
         .arg("install")
         .arg("--git")
         .arg(WASM_BINDGEN_GIT_URL)
+        .arg("-f")
         .spawn()
         .map_err(Error::InstallCommandError)?;
 
@@ -79,19 +81,33 @@ pub fn generate(target_name: &str, input_file: &Path) -> Result<(PathBuf, PathBu
         },
     }
 
-    let mut bindgen = Command::new("wasm-bindgen")
+    let retry = match Command::new("wasm-bindgen")
         .arg(&input_file)
         .arg("--out-dir")
         .arg(&out_dir)
         .spawn()
-        .map_err(Error::BindgenCommandError)?;
-
-    match bindgen.wait() {
-        Ok(status) => match status.success() {
-            true => {}
-            false => return Err(Error::BindgenFailed),
-        },
+        .map_err(Error::BindgenCommandError)?.wait() {
+        Ok(status) => !status.success(),
         Err(e) => return Err(Error::BindgenCommandError(e)),
+    };
+
+    // If bindgen failed it might be because wasm-bindgen is outdated
+    // Install a new version and try again
+    if retry {
+        println!("wasm-build: wasm-bindgen failed, try installing latest version of wasm-bindgen");
+        install()?;
+        
+        match Command::new("wasm-bindgen")
+        .arg(&input_file)
+        .arg("--out-dir")
+        .arg(&out_dir)
+        .spawn()
+        .map_err(Error::BindgenCommandError)?.wait() {
+            Ok(status) => if !status.success() {
+                return Err(Error::BindgenFailed)
+            },
+            Err(e) => return Err(Error::BindgenCommandError(e))
+        }
     }
 
     let mut js_out = out_dir.clone();

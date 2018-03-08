@@ -8,3 +8,4 @@ mod util;
 pub mod cargo;
 pub mod bindgen;
 pub mod webpack;
+pub mod build;
