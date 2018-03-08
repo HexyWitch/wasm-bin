@@ -1,5 +1,6 @@
 use std::io;
 use std::io::Write;
+use std::fs;
 use std::fs::File;
 use std::process::Command;
 use std::path::{Path, PathBuf};
@@ -56,6 +57,7 @@ pub enum Error {
     InstallCommandError(io::Error),
     PackageFailed,
     PackageCommandError(io::Error),
+    RemoveExistingDistError(io::Error),
     WriteJsIndexError(io::Error),
     WriteHtmlIndexError(io::Error),
 }
@@ -167,7 +169,18 @@ pub fn package_bin(target_name: &str, path: &Path) -> Result<PathBuf, Error> {
     let build_dir = path.with_file_name("");
     create_js_index(target_name, &build_dir)?;
 
-    let out_dir = build_dir.parent().unwrap().to_path_buf();
+    let mut out_dir = build_dir.to_path_buf();
+    out_dir.push("dist");
+
+    // Remove dist folder if it already exists
+    match fs::remove_dir_all(&out_dir) {
+        Err(e) => match e.kind() {
+            io::ErrorKind::NotFound => {},
+            _ => return Err(Error::RemoveExistingDistError(e))
+        },
+        _ => {}
+    }
+    
     let out_file: PathBuf = [&out_dir, Path::new(&format!("{}.js", target_name))]
         .iter()
         .collect();

@@ -14,7 +14,6 @@ pub enum Error {
 pub struct Options {
     pub bin: Option<String>,
     pub features: Option<String>,
-    pub manifest_path: Option<String>,
 }
 
 pub fn build(options: &Options) -> Result<(), Error> {
@@ -22,7 +21,6 @@ pub fn build(options: &Options) -> Result<(), Error> {
     let cargo_options = cargo::BuildOptions {
         bin: options.bin.clone(),
         features: options.features.clone(),
-        manifest_path: None,
     };
     let artifacts = cargo::build(&cargo_options).map_err(Error::CargoBuildError)?;
 

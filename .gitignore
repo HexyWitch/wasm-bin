@@ -1,4 +1,5 @@
 /tests/test-project-simple/target
+/tests/test-project-simple/Cargo.toml
 /target
 Cargo.lock
 /node_modules

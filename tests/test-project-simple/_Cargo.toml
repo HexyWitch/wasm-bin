@@ -1,7 +1,0 @@
-[package]
-name = "test_project_simple"
-version = "0.1.0"
-authors = ["William Lundstedt <bananavice@gmail.com>"]
-
-[dependencies]
-wasm-bindgen = { git = 'https://github.com/alexcrichton/wasm-bindgen' }
