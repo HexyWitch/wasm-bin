@@ -9,7 +9,7 @@ use wasm_build_support::build;
 
 #[test]
 fn build_project_simple() {
-    let project_dir = Path::new("./examples/test-project-simple");
+    let project_dir = Path::new("./tests/test-project-simple");
     std::env::set_current_dir(project_dir).expect("Error setting working directory");
 
     build::build(&build::Options::default()).unwrap();

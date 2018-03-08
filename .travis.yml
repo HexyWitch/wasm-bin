@@ -11,6 +11,6 @@ cache:
   directories:
   - $HOME/.cargo
   - $TRAVIS_BUILD_DIR/target
-  - $TRAVIS_BUILD_DIR/test-project-simple/target/debug
-  - $TRAVIS_BUILD_DIR/test-project-simple/target/release
-  - $TRAVIS_BUILD_DIR/test-project-simple/target/wasm32-unknown-unknown
+  - $TRAVIS_BUILD_DIR/examples/test-project-simple/target/debug
+  - $TRAVIS_BUILD_DIR/examples/test-project-simple/target/release
+  - $TRAVIS_BUILD_DIR/examples/test-project-simple/target/wasm32-unknown-unknown

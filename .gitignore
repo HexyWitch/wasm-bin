@@ -1,4 +1,4 @@
-/examples/test-project-simple/target
+/tests/test-project-simple/target
 /target
 /node_modules
 **/*.rs.bk
