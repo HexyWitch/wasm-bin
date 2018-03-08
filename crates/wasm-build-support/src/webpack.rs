@@ -178,7 +178,9 @@ pub fn package(target_name: &str, entry: &Path) -> Result<PathBuf, Error> {
         _ => {}
     }
 
-    let out_file: PathBuf = [&out_dir, Path::new(&format!("{}.js", target_name))].iter().collect();
+    let out_file: PathBuf = [&out_dir, Path::new(&format!("{}.js", target_name))]
+        .iter()
+        .collect();
     // Package the js index file into a bundle
     match webpack_command()
         .stdout(Stdio::piped())
