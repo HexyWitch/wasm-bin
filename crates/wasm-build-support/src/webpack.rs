@@ -2,7 +2,7 @@ use std::io;
 use std::io::Write;
 use std::fs;
 use std::fs::File;
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::path::{Path, PathBuf};
 
 use util;
@@ -58,6 +58,8 @@ pub enum Error {
     PackageFailed,
     PackageCommandError(io::Error),
     RemoveExistingDistError(io::Error),
+    CopyJsModulesError(io::Error),
+    CopyHtmlIndexError(io::Error),
     WriteJsIndexError(io::Error),
     WriteHtmlIndexError(io::Error),
 }
@@ -120,6 +122,68 @@ fn install() -> Result<(), Error> {
     }
 }
 
+fn path_exists(path: &Path) -> bool {
+    match fs::metadata(path) {
+        Err(e) => match e.kind() {
+            io::ErrorKind::NotFound => false,
+            _ => true,
+        },
+        _ => true,
+    }
+}
+
+fn copy_js_modules(target_name: &str, out_dir: &Path) -> Result<(), Error> {
+    let js_dir = Path::new("./js");
+    if !path_exists(js_dir) {
+        return Ok(());
+    }
+
+    println!("Find js modules");
+    for dir_entry in fs::read_dir(Path::new("./js")).map_err(Error::CopyJsModulesError)? {
+        let path = dir_entry.unwrap().path();
+        if path.as_os_str().to_str().unwrap().ends_with(".js") {
+            fs::copy(&path, out_dir.join(path.file_name().unwrap()))
+                .map_err(Error::CopyJsModulesError)?;
+        }
+    }
+
+    let target_js_dir = js_dir.join(target_name);
+    if !path_exists(&target_js_dir) {
+        return Ok(());
+    }
+    for dir_entry in fs::read_dir(target_js_dir).map_err(Error::CopyJsModulesError)? {
+        let path = dir_entry.unwrap().path();
+        if path.ends_with(".js") {
+            fs::copy(path, out_dir).map_err(Error::CopyJsModulesError)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn copy_js_index(target_name: &str, out_dir: &Path) -> Result<Option<PathBuf>, Error> {
+    let js_dir = Path::new("./js").join(target_name).join("index.js");
+    if !path_exists(&js_dir) {
+        return Ok(None);
+    }
+
+    let out_file = out_dir.join(js_dir.file_name().unwrap());
+    fs::copy(&js_dir, &out_file).map_err(Error::CopyHtmlIndexError)?;
+    Ok(Some(out_file))
+}
+
+fn copy_html_index(target_name: &str, out_dir: &Path) -> Result<Option<PathBuf>, Error> {
+    let html_dir = Path::new("./html").join(format!("{}.html", target_name));
+    if !path_exists(&html_dir) {
+        return Ok(None);
+    }
+
+    let out_file = out_dir.join(html_dir.file_name().unwrap());
+    fs::copy(&html_dir, &out_file).map_err(Error::CopyHtmlIndexError)?;
+
+    Ok(Some(out_file))
+}
+
 fn create_js_index(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
     let content = format!(
         r#"
@@ -178,12 +242,13 @@ pub fn package(target_name: &str, entry: &Path) -> Result<PathBuf, Error> {
         _ => {}
     }
 
+    copy_js_modules(target_name, &entry.with_file_name(""))?;
+
     let out_file: PathBuf = [&out_dir, Path::new(&format!("{}.js", target_name))]
         .iter()
         .collect();
     // Package the js index file into a bundle
     match webpack_command()
-        .stdout(Stdio::piped())
         .arg(entry)
         .arg("--output")
         .arg(&out_file)
@@ -191,10 +256,12 @@ pub fn package(target_name: &str, entry: &Path) -> Result<PathBuf, Error> {
         .arg("development")
         .output()
     {
-        Ok(output) => if !output.status.success() {
+        Ok(output) => {
             println!("{}", String::from_utf8_lossy(&output.stdout));
-            return Err(Error::PackageFailed);
-        },
+            if !output.status.success() {
+                return Err(Error::PackageFailed);
+            }
+        }
         Err(e) => return Err(Error::PackageCommandError(e)),
     }
 
@@ -202,10 +269,16 @@ pub fn package(target_name: &str, entry: &Path) -> Result<PathBuf, Error> {
 }
 
 pub fn package_bin(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
-    let js_index = create_js_index(target_name, &dir)?;
+    let js_index = match copy_js_index(target_name, dir)? {
+        Some(f) => f,
+        None => create_js_index(target_name, dir)?,
+    };
 
     let out_dir = package(target_name, &js_index)?;
 
-    let html_index = create_html_index(target_name, &out_dir)?;
+    let html_index = match copy_html_index(target_name, &out_dir)? {
+        Some(p) => p,
+        None => create_html_index(target_name, &out_dir)?,
+    };
     Ok(html_index)
 }

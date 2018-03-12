@@ -3,13 +3,11 @@ use std::path::PathBuf;
 use cargo;
 use bindgen;
 use webpack;
-use wasm_post;
 use cargo::WasmArtifact;
 
 #[derive(Debug)]
 pub enum Error {
     CargoBuildError(cargo::Error),
-    WasmPostProcessError(wasm_post::Error),
     BindgenError(bindgen::Error),
     WebpackError(webpack::Error),
 }
@@ -47,11 +45,6 @@ pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
             WasmArtifact::Binary(target, path) => (true, target, path),
             WasmArtifact::Library(target, path) => (false, target, path),
         };
-        println!(
-            "wasm-build: Run wasm post-processing for target '{}'",
-            target
-        );
-        let path = wasm_post::process(&path).map_err(Error::WasmPostProcessError)?;
 
         println!("wasm-build: Generate js bindings for target '{}'", target);
         let (mut js_out, _) = bindgen::generate(&target, &path).map_err(Error::BindgenError)?;

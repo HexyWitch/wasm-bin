@@ -9,6 +9,11 @@ extern "C" {
     fn alert(s: &str);
 }
 
+#[wasm_bindgen(module  = "./add")]
+extern {
+    fn add(l: i32, r: i32) -> i32;
+}
+
 #[wasm_bindgen]
 pub extern "C" fn greet(name: &str) {
     alert(&format!("Hello, {}!", name));
@@ -20,5 +25,5 @@ pub fn web_main() {
 }
 
 pub fn main() {
-    alert("Woop");
+    alert(&format!("{}", add(4, 7)));
 }

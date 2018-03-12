@@ -6,7 +6,8 @@ use std::path::{Path, PathBuf};
 use util;
 use util::prompt_confirm;
 
-const WASM_BINDGEN_GIT_URL: &str = "https://github.com/alexcrichton/wasm-bindgen";
+const WASM_BINDGEN_GIT_URL: &str = "https://github.com/Healthire/wasm-bindgen";
+const WASM_BINDGEN_GIT_REV: Option<&str> = Some("fn-args");
 const WASM_BINDGEN_OUT_DIR: &str = "./target/wasm-build";
 const INSTALL_PROMPT: &str =
     "No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ";
@@ -50,10 +51,15 @@ pub fn install_if_required(skip_prompt: Option<bool>) -> Result<(), Error> {
 
 fn install() -> Result<(), Error> {
     println!("wasm-build: Install wasm-bindgen");
-    let mut install = Command::new("cargo")
+    let mut install = Command::new("cargo");
+    install
         .arg("install")
         .arg("--git")
-        .arg(WASM_BINDGEN_GIT_URL)
+        .arg(WASM_BINDGEN_GIT_URL);
+    if let Some(rev) = WASM_BINDGEN_GIT_REV {
+        install.arg("--rev").arg(rev);
+    }
+    let mut install = install
         .arg("-f")
         .spawn()
         .map_err(Error::InstallCommandError)?;
