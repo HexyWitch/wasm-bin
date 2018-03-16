@@ -6,8 +6,8 @@ use std::path::{Path, PathBuf};
 use util;
 use util::prompt_confirm;
 
-const WASM_BINDGEN_GIT_URL: &str = "https://github.com/Healthire/wasm-bindgen";
-const WASM_BINDGEN_GIT_REV: Option<&str> = Some("fn-args");
+const WASM_BINDGEN_GIT_URL: &str = "https://github.com/alexcrichton/wasm-bindgen";
+const WASM_BINDGEN_GIT_REV: Option<&str> = None;
 const WASM_BINDGEN_OUT_DIR: &str = "./target/wasm-build";
 const INSTALL_PROMPT: &str =
     "No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ";

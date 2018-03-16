@@ -15,7 +15,7 @@ name = "test_project_simple"
 version = "0.0.1"
 
 [dependencies]
-wasm-bindgen = { git = 'https://github.com/Healthire/wasm-bindgen', rev = 'fn-args' }
+wasm-bindgen = { git = 'https://github.com/alexcrichton/wasm-bindgen' }
 "#;
 
 #[test]
