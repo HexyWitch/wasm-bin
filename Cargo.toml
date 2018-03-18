@@ -7,9 +7,9 @@ authors = ["William Lundstedt <bananavice@gmail.com>"]
 members = [
     "crates/wasm-build-support"
 ]
-exclude = [
-    "tests/test-project-simple"
-]
+
+[dev-dependencies]
+wasm_build_test = { path = "./crates/wasm-build-test" }
 
 [dependencies]
 serde = "*"
@@ -17,3 +17,4 @@ serde_json = "*"
 serde_derive = "*"
 clap = "*"
 wasm_build_support = { path = "./crates/wasm-build-support" }
+wasm_build_test = { path = "./crates/wasm-build-test" }
