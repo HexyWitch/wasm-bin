@@ -16,5 +16,7 @@ serde = "*"
 serde_json = "*"
 serde_derive = "*"
 clap = "*"
+futures = "*"
+hyper = "*"
 wasm_build_support = { path = "./crates/wasm-build-support" }
 wasm_build_test = { path = "./crates/wasm-build-test" }

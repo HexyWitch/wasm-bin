@@ -172,18 +172,6 @@ fn copy_js_index(target_name: &str, out_dir: &Path) -> Result<Option<PathBuf>, E
     Ok(Some(out_file))
 }
 
-fn copy_html_index(target_name: &str, out_dir: &Path) -> Result<Option<PathBuf>, Error> {
-    let html_dir = Path::new("./html").join(format!("{}.html", target_name));
-    if !path_exists(&html_dir) {
-        return Ok(None);
-    }
-
-    let out_file = out_dir.join(html_dir.file_name().unwrap());
-    fs::copy(&html_dir, &out_file).map_err(Error::CopyHtmlIndexError)?;
-
-    Ok(Some(out_file))
-}
-
 fn create_js_index(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
     let content = format!(
         r#"
@@ -204,31 +192,6 @@ fn create_js_index(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
     Ok(js_path)
 }
 
-fn create_html_index(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
-    let content = format!(
-        r#"
-        <html>
-            <head>
-                <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-            </head>
-            <body>
-                <script src='./{}.js'></script>
-            </body>
-        </html>"#,
-        target_name
-    );
-    let html_path: PathBuf = [dir, Path::new(&format!("{}.html", target_name))]
-        .iter()
-        .collect();
-    let mut html_index = File::create(&html_path).map_err(Error::WriteHtmlIndexError)?;
-    html_index
-        .write_all(content.as_bytes())
-        .map_err(Error::WriteHtmlIndexError)?;
-    html_index.flush().map_err(Error::WriteHtmlIndexError)?;
-
-    Ok(html_path)
-}
-
 pub fn package(target_name: &str, entry: &Path) -> Result<PathBuf, Error> {
     let mut out_dir = entry.with_file_name("");
     out_dir.push("dist");
@@ -244,9 +207,7 @@ pub fn package(target_name: &str, entry: &Path) -> Result<PathBuf, Error> {
 
     copy_js_modules(target_name, &entry.with_file_name(""))?;
 
-    let out_file: PathBuf = [&out_dir, Path::new(&format!("{}.js", target_name))]
-        .iter()
-        .collect();
+    let out_file: PathBuf = [&out_dir, Path::new(&format!("app.js"))].iter().collect();
     // Package the js index file into a bundle
     match webpack_command()
         .arg(entry)
@@ -265,7 +226,7 @@ pub fn package(target_name: &str, entry: &Path) -> Result<PathBuf, Error> {
         Err(e) => return Err(Error::PackageCommandError(e)),
     }
 
-    Ok(out_dir)
+    Ok(out_file)
 }
 
 pub fn package_bin(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
@@ -274,11 +235,6 @@ pub fn package_bin(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
         None => create_js_index(target_name, dir)?,
     };
 
-    let out_dir = package(target_name, &js_index)?;
-
-    let html_index = match copy_html_index(target_name, &out_dir)? {
-        Some(p) => p,
-        None => create_html_index(target_name, &out_dir)?,
-    };
-    Ok(html_index)
+    let out_file = package(target_name, &js_index)?;
+    Ok(out_file)
 }
