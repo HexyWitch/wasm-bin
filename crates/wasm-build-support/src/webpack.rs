@@ -207,7 +207,9 @@ pub fn package(target_name: &str, entry: &Path) -> Result<PathBuf, Error> {
 
     copy_js_modules(target_name, &entry.with_file_name(""))?;
 
-    let out_file: PathBuf = [&out_dir, Path::new(&format!("app.js"))].iter().collect();
+    let out_file: PathBuf = [&out_dir, Path::new(&format!("{}.js", target_name))]
+        .iter()
+        .collect();
     // Package the js index file into a bundle
     match webpack_command()
         .arg(entry)

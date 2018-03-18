@@ -11,15 +11,20 @@ use hyper::{Get, StatusCode};
 use hyper::header::ContentLength;
 use hyper::server::{Http, Request, Response, Service};
 
-static DEFAULT_HTML_INDEX: &str = r#"
-<html>
-    <head>
-        <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-    </head>
-    <body>
-        <script src='app.js'></script>
-    </body>
-</html>"#;
+fn default_html_index(target: &str) -> String {
+    return format!(
+        r#"
+        <html>
+            <head>
+                <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+            </head>
+            <body>
+                <script src='{}.js'></script>
+            </body>
+        </html>"#,
+        target
+    );
+}
 
 fn path_exists(path: &Path) -> bool {
     match fs::metadata(path) {
@@ -69,9 +74,10 @@ impl Service for WebApp {
                 if path_exists(html_index_path) {
                     serve_file(html_index_path)
                 } else {
+                    let contents = default_html_index(&self.target);
                     Response::new()
-                        .with_header(ContentLength(DEFAULT_HTML_INDEX.len() as u64))
-                        .with_body(DEFAULT_HTML_INDEX)
+                        .with_header(ContentLength(contents.len() as u64))
+                        .with_body(contents)
                 }
             }
             (&Get, path) => {
