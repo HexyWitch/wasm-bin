@@ -21,8 +21,24 @@ pub enum Error {
 
 #[derive(Default)]
 pub struct BuildOptions {
+    pub package: Option<String>,
+    pub all: bool,
+    pub exclude: Option<String>,
+    pub jobs: Option<String>,
+    pub lib: bool,
     pub bin: Option<String>,
+    pub bins: bool,
+    pub all_targets: bool,
+    pub release: bool,
     pub features: Option<String>,
+    pub all_features: bool,
+    pub no_default_features: bool,
+    pub manifest_path: Option<String>,
+    pub verbose: bool,
+    pub quiet: bool,
+    pub frozen: bool,
+    pub locked: bool,
+    pub cargo_flags: Option<String>,
 }
 
 #[derive(Debug)]
@@ -180,18 +196,64 @@ pub fn build(options: &BuildOptions) -> Result<Vec<WasmArtifact>, Error> {
     cmd.stdout(Stdio::piped())
         .arg("build")
         .arg("--target=wasm32-unknown-unknown")
-        .arg("--release")
         .args(&["--message-format", "json"]);
 
+    if let Some(ref package) = options.package {
+        cmd.arg("--package").arg(package);
+    }
+    if options.all {
+        cmd.arg("--all");
+    }
+    if let Some(ref exclude) = options.exclude {
+        cmd.arg("--exclude").arg(exclude);
+    }
+    if let Some(ref jobs) = options.jobs {
+        cmd.arg("--jobs").arg(jobs);
+    }
+    if options.lib {
+        cmd.arg("--lib");
+    }
     if let Some(ref bin) = options.bin {
         cmd.arg("--bin").arg(bin);
+    }
+    if options.bins {
+        cmd.arg("--bins");
+    }
+    if options.all_targets {
+        cmd.arg("--all_targets");
+    }
+    if options.release {
+        cmd.arg("--release");
     }
     if let Some(ref features) = options.features {
         cmd.arg("--features").arg(features);
     }
+    if options.all_features {
+        cmd.arg("--all_features");
+    }
+    if options.no_default_features {
+        cmd.arg("--no_default_features");
+    }
+    if let Some(ref manifest_path) = options.manifest_path {
+        cmd.arg("--manifest_path").arg(manifest_path);
+    }
+    if options.verbose {
+        cmd.arg("--verbose");
+    }
+    if options.quiet {
+        cmd.arg("--quiet");
+    }
+    if options.frozen {
+        cmd.arg("--frozen");
+    }
+    if options.locked {
+        cmd.arg("--locked");
+    }
+    if let Some(ref cargo_flags) = options.cargo_flags {
+        cmd.arg("--cargo_flags").arg(cargo_flags);
+    }
 
     let child = cmd.spawn().map_err(|e| Error::RunCommandError(e))?;
-
     let stdout = BufReader::new(child.stdout.ok_or_else(|| Error::CaptureStdoutError)?);
 
     let mut artifacts = Vec::new();
