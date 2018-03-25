@@ -177,7 +177,7 @@ fn create_js_index(target_name: &str, dir: &Path) -> Result<PathBuf, Error> {
         r#"
         void async function () {{
             const js = await import("./{}");
-            js.web_main()
+            js.main()
         }}();
         "#,
         target_name

@@ -1,14 +1,23 @@
-use std::path::PathBuf;
+use std::fs::OpenOptions;
+use std::io;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 
-use cargo;
 use bindgen;
-use webpack;
+use cargo;
 use cargo::WasmArtifact;
+use webpack;
+
+#[cfg(test)]
+const SKIP_PROMPT: bool = true;
+#[cfg(not(test))]
+const SKIP_PROMPT: bool = false;
 
 #[derive(Debug)]
 pub enum Error {
     CargoBuildError(cargo::Error),
     BindgenError(bindgen::Error),
+    ExportMainError(io::Error),
     WebpackError(webpack::Error),
 }
 
@@ -45,6 +54,22 @@ pub struct TargetPackage {
     pub path: PathBuf,
 }
 
+fn export_main(js: &Path) -> Result<(), Error> {
+    let mut js_file = OpenOptions::new()
+        .append(true)
+        .open(js)
+        .map_err(Error::ExportMainError)?;
+    js_file
+        .write_all(
+            "export function main() {
+            wasm.main();
+        }"
+                .as_bytes(),
+        )
+        .map_err(Error::ExportMainError)?;
+    Ok(())
+}
+
 pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
     println!("wasm-build: Starting cargo build step");
     let cargo_options = cargo::BuildOptions {
@@ -69,7 +94,7 @@ pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
     };
     let artifacts = cargo::build(&cargo_options).map_err(Error::CargoBuildError)?;
 
-    bindgen::install_if_required(Some(true)).map_err(Error::BindgenError)?;
+    bindgen::install_if_required(Some(SKIP_PROMPT)).map_err(Error::BindgenError)?;
     let mut bins = Vec::new();
     let mut libs = Vec::new();
     for a in artifacts {
@@ -81,6 +106,7 @@ pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
         println!("wasm-build: Generate js bindings for target '{}'", target);
         let (mut js_out, _) = bindgen::generate(&target, &path).map_err(Error::BindgenError)?;
         if binary {
+            export_main(&js_out)?;
             js_out.pop();
             bins.push((target, js_out));
         } else {
@@ -88,7 +114,7 @@ pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
         }
     }
 
-    webpack::install_if_required(true).unwrap();
+    webpack::install_if_required(SKIP_PROMPT).unwrap();
 
     let mut targets = Vec::new();
     for (target, path) in bins {

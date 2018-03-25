@@ -30,7 +30,7 @@ fn build_project_simple() {
         .file(
             "./src/main.rs",
             r#"
-            #![feature(proc_macro)]
+            #![feature(proc_macro, wasm_custom_section, wasm_import_module)]
 
             extern crate wasm_bindgen;
 
@@ -50,12 +50,7 @@ fn build_project_simple() {
             pub extern "C" fn greet(name: &str) {
                 alert(&format!("Hello, {}!", name));
             }
-
-            #[wasm_bindgen]
-            pub fn web_main() {
-                main();
-            }
-
+            
             pub fn main() {
                 alert(&format!("{}", add(4, 7)));
             }
