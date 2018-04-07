@@ -1,5 +1,5 @@
-# wasm-build
-[![Build Status](https://travis-ci.org/Healthire/wasm-build.svg?branch=master)](https://travis-ci.org/Healthire/wasm-build)
+# wasm-bin
+[![Build Status](https://travis-ci.org/Healthire/wasm-build.svg?branch=master)](https://travis-ci.org/Healthire/wasm-bin)
 
 Tool for building and packaging rust wasm projects using [wasm-bindgen](https://github.com/alexcrichton/wasm-bindgen) for web.
 
@@ -9,14 +9,14 @@ This tool is a work in progress and is not fully implemented yet.
 
 ## Usage
 
-wasm-build depends on [yarn](https://yarnpkg.com/en/)
+wasm-bin depends on [yarn](https://yarnpkg.com/en/)
 
 ### Setup
 
 1. Install [yarn](https://yarnpkg.com/en/)
-2. Install wasm-build as a cargo package
+2. Install wasm-bin as a cargo package
 ```
-$ cargo install --git https://github.com/Healthire/wasm-build
+$ cargo install --git https://github.com/Healthire/wasm-bin
 ```
 3. Done!
 
@@ -24,17 +24,17 @@ $ cargo install --git https://github.com/Healthire/wasm-build
 
 Building is as simple as running the build command in your project directory
 ```
-$ wasm-build build
+$ wasm-bin build
 ```
-During the build process wasm-build will ask you to confirm automatically installing [wasm-bindgen](https://github.com/alexcrichton/wasm-bindgen) CLI tool and [webpack](https://webpack.js.org/) if they are not found on your system.
+During the build process wasm-bin will ask you to confirm automatically installing [wasm-bindgen](https://github.com/alexcrichton/wasm-bindgen) CLI tool and [webpack](https://webpack.js.org/) if they are not found on your system.
 
-The wasm-build build outputs a bundled javascript app to ./target/wasm-build/<target_name>/dist/<target_name>.js.
+The wasm-bin build outputs a bundled javascript app to ./target/wasm-bin/<target_name>/dist/<target_name>.js.
 
 ### Running
 
 Running a packaged is as easy as building.
 ```
-$ wasm-build run
+$ wasm-bin run
 ```
 When the build is finished, the application will be served at http://localhost:8000.
 
