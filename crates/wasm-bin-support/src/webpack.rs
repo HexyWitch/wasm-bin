@@ -138,7 +138,6 @@ fn copy_js_modules(target_name: &str, out_dir: &Path) -> Result<(), Error> {
         return Ok(());
     }
 
-    println!("Find js modules");
     for dir_entry in fs::read_dir(Path::new("./js")).map_err(Error::CopyJsModulesError)? {
         let path = dir_entry.unwrap().path();
         if path.as_os_str().to_str().unwrap().ends_with(".js") {

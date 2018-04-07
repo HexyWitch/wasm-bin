@@ -1,11 +1,9 @@
 # wasm-bin
-[![Build Status](https://travis-ci.org/Healthire/wasm-build.svg?branch=master)](https://travis-ci.org/Healthire/wasm-bin)
+[![Build Status](https://travis-ci.org/Healthire/wasm-bin.svg?branch=master)](https://travis-ci.org/Healthire/wasm-bin)
 
-Tool for building and packaging rust wasm projects using [wasm-bindgen](https://github.com/alexcrichton/wasm-bindgen) for web.
+Tool for building and packaging rust wasm binaries for the web.
 
-## Work In Progress
-
-This tool is a work in progress and is not fully implemented yet.
+Uses [wasm-bindgen](https://github.com/alexcrichton/wasm-bindgen) for generating javascript bindings;
 
 ## Usage
 
@@ -39,7 +37,3 @@ $ wasm-bin run
 When the build is finished, the application will be served at http://localhost:8000.
 
 A static HTML file can be served instead of the default HTML index by creating a ./html/<target_name>.html file.
-
-## Possible future features
-
-* Run tests (package test bundles and run tests in headless browser)
