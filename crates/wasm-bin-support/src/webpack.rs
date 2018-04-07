@@ -1,9 +1,9 @@
-use std::io;
-use std::io::Write;
 use std::fs;
 use std::fs::File;
-use std::process::Command;
+use std::io;
+use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use util;
 use util::prompt_confirm;
@@ -103,7 +103,7 @@ pub fn install_if_required(skip_prompt: bool) -> Result<(), Error> {
 }
 
 fn install() -> Result<(), Error> {
-    println!("wasm-build: Installing webpack");
+    println!("wasm-bin: Installing webpack");
     match yarn_command()
         .arg("global")
         .arg("add")

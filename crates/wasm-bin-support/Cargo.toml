@@ -1,7 +1,10 @@
 [package]
-name = "wasm_build_test"
+name = "wasm_bin_support"
 version = "0.1.0"
 authors = ["William Lundstedt <bananavice@gmail.com>"]
 
 [dependencies]
-wasm_build_support = { path = "../wasm-build-support" }
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
+clap = "*"

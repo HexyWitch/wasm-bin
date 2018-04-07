@@ -1,14 +1,14 @@
-use std::io;
 use std::fs;
-use std::process::{Command, Stdio};
+use std::io;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 use util;
 use util::prompt_confirm;
 
 const WASM_BINDGEN_GIT_URL: &str = "https://github.com/alexcrichton/wasm-bindgen";
 const WASM_BINDGEN_GIT_REV: Option<&str> = None;
-const WASM_BINDGEN_OUT_DIR: &str = "./target/wasm-build";
+const WASM_BINDGEN_OUT_DIR: &str = "./target/wasm-bin";
 const INSTALL_PROMPT: &str =
     "No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ";
 
@@ -50,7 +50,7 @@ pub fn install_if_required(skip_prompt: Option<bool>) -> Result<(), Error> {
 }
 
 fn install() -> Result<(), Error> {
-    println!("wasm-build: Install wasm-bindgen");
+    println!("wasm-bin: Install wasm-bindgen");
     let mut install = Command::new("cargo");
     install
         .arg("install")
@@ -102,7 +102,7 @@ pub fn generate(target_name: &str, input_file: &Path) -> Result<(PathBuf, PathBu
     // If bindgen failed it might be because wasm-bindgen is outdated
     // Install a new version and try again
     if retry {
-        println!("wasm-build: wasm-bindgen failed, try installing latest version of wasm-bindgen");
+        println!("wasm-bin: wasm-bindgen failed, try installing latest version of wasm-bindgen");
         install()?;
 
         match Command::new("wasm-bindgen")

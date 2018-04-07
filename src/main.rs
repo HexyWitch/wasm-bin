@@ -4,13 +4,13 @@ extern crate futures;
 extern crate hyper;
 extern crate serde;
 extern crate serde_json;
-extern crate wasm_build_support;
+extern crate wasm_bin_support;
 
 mod run;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 
-use wasm_build_support::build;
+use wasm_bin_support::build;
 
 fn shared_args<'a, 'b>() -> Vec<Arg<'a, 'b>> {
     vec![
@@ -123,7 +123,7 @@ fn build_options(matches: &ArgMatches) -> build::Options {
 }
 
 fn main() {
-    let app = App::new("wasm-build")
+    let app = App::new("wasm-bin")
         .subcommand(
             SubCommand::with_name("build")
                 .args(&shared_args())

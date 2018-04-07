@@ -1,15 +1,15 @@
-use std::path::{Path, PathBuf};
 use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
+use std::path::{Path, PathBuf};
 
-use hyper;
 use futures;
 use futures::future::FutureResult;
-use hyper::{Get, StatusCode};
+use hyper;
 use hyper::header::ContentLength;
 use hyper::server::{Http, Request, Response, Service};
+use hyper::{Get, StatusCode};
 
 fn default_html_index(target: &str) -> String {
     return format!(
@@ -108,7 +108,7 @@ pub fn serve(target_name: String, mut path: PathBuf) {
         })
         .unwrap();
     println!(
-        "wasm-build: Listening on http://{}.",
+        "wasm-bin: Listening on http://{}.",
         server.local_addr().unwrap()
     );
     server.run().unwrap();

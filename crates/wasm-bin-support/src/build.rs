@@ -71,7 +71,7 @@ fn export_main(js: &Path) -> Result<(), Error> {
 }
 
 pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
-    println!("wasm-build: Starting cargo build step");
+    println!("wasm-bin: Starting cargo build step");
     let cargo_options = cargo::BuildOptions {
         package: options.package.clone(),
         all: options.all.clone(),
@@ -103,7 +103,7 @@ pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
             WasmArtifact::Library(target, path) => (false, target, path),
         };
 
-        println!("wasm-build: Generate js bindings for target '{}'", target);
+        println!("wasm-bin: Generate js bindings for target '{}'", target);
         let (mut js_out, _) = bindgen::generate(&target, &path).map_err(Error::BindgenError)?;
         if binary {
             export_main(&js_out)?;
@@ -118,7 +118,7 @@ pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
 
     let mut targets = Vec::new();
     for (target, path) in bins {
-        println!("wasm-build: Package binary target '{}'", target);
+        println!("wasm-bin: Package binary target '{}'", target);
         let dir = webpack::package_bin(&target, &path).map_err(Error::WebpackError)?;
         targets.push(TargetPackage {
             ty: PackageType::Binary,
@@ -127,7 +127,7 @@ pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
         });
     }
     for (target, js_path) in libs {
-        println!("wasm-build: Package library target '{}'", target);
+        println!("wasm-bin: Package library target '{}'", target);
         let dir = webpack::package(&target, &js_path).map_err(Error::WebpackError)?;
         targets.push(TargetPackage {
             ty: PackageType::Library,

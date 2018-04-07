@@ -1,13 +1,13 @@
 extern crate clap;
 extern crate serde;
 extern crate serde_json;
-extern crate wasm_build_support;
-extern crate wasm_build_test;
+extern crate wasm_bin_support;
+extern crate wasm_bin_test;
 
 use std::path::PathBuf;
 
-use wasm_build_support::build;
-use wasm_build_test::TestProject;
+use wasm_bin_support::build;
+use wasm_bin_test::TestProject;
 
 #[test]
 fn build_project_simple() {

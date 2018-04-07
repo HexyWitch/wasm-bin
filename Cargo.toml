@@ -1,15 +1,15 @@
 [package]
-name = "wasm-build"
+name = "wasm-bin"
 version = "0.1.0"
 authors = ["William Lundstedt <bananavice@gmail.com>"]
 
 [workspace]
 members = [
-    "crates/wasm-build-support"
+    "crates/wasm-bin-support"
 ]
 
 [dev-dependencies]
-wasm_build_test = { path = "./crates/wasm-build-test" }
+wasm_bin_test = { path = "./crates/wasm-bin-test" }
 
 [dependencies]
 serde = "*"
@@ -18,5 +18,5 @@ serde_derive = "*"
 clap = "*"
 futures = "*"
 hyper = "*"
-wasm_build_support = { path = "./crates/wasm-build-support" }
-wasm_build_test = { path = "./crates/wasm-build-test" }
+wasm_bin_support = { path = "./crates/wasm-bin-support" }
+wasm_bin_test = { path = "./crates/wasm-bin-test" }
