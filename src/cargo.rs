@@ -1,9 +1,9 @@
-use std::process::{Command, Stdio};
+use serde::de;
+use serde_json;
 use std::io;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
-use serde_json;
-use serde::de;
+use std::process::{Command, Stdio};
 
 const BIN_TARGET_KIND_ID: &str = "bin";
 const LIB_TARGET_KIND_ID: &str = "cdylib";
@@ -278,7 +278,6 @@ pub fn build(options: &BuildOptions) -> Result<Vec<WasmArtifact>, Error> {
                                 .map_err(Error::SerializeMessageError)?,
                             |v| v.to_string(),
                         );
-                        println!("{}", error);
                         errors.push(error);
                     }
                     _ => {}

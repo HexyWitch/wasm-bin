@@ -3,14 +3,6 @@ name = "wasm-bin"
 version = "0.1.0"
 authors = ["William Lundstedt <bananavice@gmail.com>"]
 
-[workspace]
-members = [
-    "crates/wasm-bin-support"
-]
-
-[dev-dependencies]
-wasm_bin_test = { path = "./crates/wasm-bin-test" }
-
 [dependencies]
 serde = "*"
 serde_json = "*"
@@ -18,5 +10,3 @@ serde_derive = "*"
 clap = "*"
 futures = "*"
 hyper = "*"
-wasm_bin_support = { path = "./crates/wasm-bin-support" }
-wasm_bin_test = { path = "./crates/wasm-bin-test" }

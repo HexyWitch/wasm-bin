@@ -1,5 +1,6 @@
-extern crate wasm_bin_support;
+extern crate wasm_bin;
 
+use std;
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
@@ -7,8 +8,8 @@ use std::io;
 use std::io::prelude::*;
 use std::path::Path;
 
-use wasm_bin_support::build;
-use wasm_bin_support::build::Options as BuildOptions;
+use wasm_bin::build;
+use wasm_bin::build::Options as BuildOptions;
 
 fn path_exists(path: &Path) -> bool {
     match fs::metadata(path) {

@@ -4,13 +4,13 @@ extern crate futures;
 extern crate hyper;
 extern crate serde;
 extern crate serde_json;
-extern crate wasm_bin_support;
+extern crate wasm_bin;
 
 mod run;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 
-use wasm_bin_support::build;
+use wasm_bin::build;
 
 fn shared_args<'a, 'b>() -> Vec<Arg<'a, 'b>> {
     vec![

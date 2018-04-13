@@ -1,7 +1,0 @@
-[package]
-name = "wasm_bin_test"
-version = "0.1.0"
-authors = ["William Lundstedt <bananavice@gmail.com>"]
-
-[dependencies]
-wasm_bin_support = { path = "../wasm-bin-support" }

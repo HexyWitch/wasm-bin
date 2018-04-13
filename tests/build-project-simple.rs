@@ -1,13 +1,14 @@
 extern crate clap;
 extern crate serde;
 extern crate serde_json;
-extern crate wasm_bin_support;
-extern crate wasm_bin_test;
+extern crate wasm_bin;
+
+mod utils;
 
 use std::path::PathBuf;
 
-use wasm_bin_support::build;
-use wasm_bin_test::TestProject;
+use utils::TestProject;
+use wasm_bin::build;
 
 #[test]
 fn build_project_simple() {
@@ -24,7 +25,7 @@ fn build_project_simple() {
             [workspace]
 
             [dependencies]
-            wasm-bindgen = { git = 'https://github.com/alexcrichton/wasm-bindgen' }
+            wasm-bindgen = "*"
         "#,
         )
         .file(
@@ -41,7 +42,7 @@ fn build_project_simple() {
                 fn alert(s: &str);
             }
 
-            #[wasm_bindgen(module  = "./add")]
+            #[wasm_bindgen]
             extern {
                 fn add(l: i32, r: i32) -> i32;
             }
@@ -57,24 +58,26 @@ fn build_project_simple() {
         "#,
         )
         .file(
-            "./js/add.js",
-            "
-            export function add(l, r) {
-                return l + r;
-            }
-        ",
-        )
-        .file(
             "./html/test_project_simple.html",
             r#"
             <html>
                 <head>
                     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+                    <script src='./test_project_simple.js'></script>
+                    <script>
+                        function add(l, r) {
+                            return l + r;
+                        }
+                        window.addEventListener('load', function() {
+                            wasm_bindgen("./test_project_simple_bg.wasm").then(function() {
+                                wasm_bindgen.wasm.main();
+                            });
+                        }, false);
+                    </script>
                 </head>
 
                 <body>
                     <h1>Welcome to this test project!</h1>
-                    <script src='./test_project_simple.js'></script>
                 </body>
             </html>"#,
         );

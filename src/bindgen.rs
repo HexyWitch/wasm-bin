@@ -6,8 +6,6 @@ use std::process::{Command, Stdio};
 use util;
 use util::prompt_confirm;
 
-const WASM_BINDGEN_GIT_URL: &str = "https://github.com/alexcrichton/wasm-bindgen";
-const WASM_BINDGEN_GIT_REV: Option<&str> = None;
 const WASM_BINDGEN_OUT_DIR: &str = "./target/wasm-bin";
 const INSTALL_PROMPT: &str =
     "No installation of wasm-bindgen found. Do you want to install wasm-bindgen? (y/n): ";
@@ -18,8 +16,6 @@ pub enum Error {
     InstallCommandError(io::Error),
     BindgenFailed,
     BindgenCommandError(io::Error),
-    GenerateModuleFailed,
-    GenerateModuleCommandError(io::Error),
     PromptError(util::Error),
     CreateTargetDirectoryError(io::Error),
 }
@@ -51,15 +47,9 @@ pub fn install_if_required(skip_prompt: Option<bool>) -> Result<(), Error> {
 
 fn install() -> Result<(), Error> {
     println!("wasm-bin: Install wasm-bindgen");
-    let mut install = Command::new("cargo");
-    install
+    let mut install = Command::new("cargo")
         .arg("install")
-        .arg("--git")
-        .arg(WASM_BINDGEN_GIT_URL);
-    if let Some(rev) = WASM_BINDGEN_GIT_REV {
-        install.arg("--rev").arg(rev);
-    }
-    let mut install = install
+        .arg("wasm-bindgen-cli")
         .arg("-f")
         .spawn()
         .map_err(Error::InstallCommandError)?;
@@ -87,36 +77,28 @@ pub fn generate(target_name: &str, input_file: &Path) -> Result<(PathBuf, PathBu
         },
     }
 
-    let retry = match Command::new("wasm-bindgen")
-        .arg(&input_file)
-        .arg("--out-dir")
-        .arg(&out_dir)
-        .spawn()
-        .map_err(Error::BindgenCommandError)?
-        .wait()
-    {
-        Ok(status) => !status.success(),
-        Err(e) => return Err(Error::BindgenCommandError(e)),
-    };
-
-    // If bindgen failed it might be because wasm-bindgen is outdated
-    // Install a new version and try again
-    if retry {
-        println!("wasm-bin: wasm-bindgen failed, try installing latest version of wasm-bindgen");
-        install()?;
-
-        match Command::new("wasm-bindgen")
+    for _ in 0..2 {
+        let retry = match Command::new("wasm-bindgen")
             .arg(&input_file)
+            .arg("--browser")
+            .arg("--no-modules")
             .arg("--out-dir")
             .arg(&out_dir)
             .spawn()
             .map_err(Error::BindgenCommandError)?
             .wait()
         {
-            Ok(status) => if !status.success() {
-                return Err(Error::BindgenFailed);
-            },
+            Ok(status) => !status.success(),
             Err(e) => return Err(Error::BindgenCommandError(e)),
+        };
+
+        if retry {
+            println!(
+                "wasm-bin: wasm-bindgen failed, try installing latest version of wasm-bindgen"
+            );
+            install()?;
+        } else {
+            break;
         }
     }
 

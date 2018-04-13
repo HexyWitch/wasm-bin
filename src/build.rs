@@ -1,12 +1,9 @@
-use std::fs::OpenOptions;
 use std::io;
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use bindgen;
 use cargo;
 use cargo::WasmArtifact;
-use webpack;
 
 #[cfg(test)]
 const SKIP_PROMPT: bool = true;
@@ -18,7 +15,6 @@ pub enum Error {
     CargoBuildError(cargo::Error),
     BindgenError(bindgen::Error),
     ExportMainError(io::Error),
-    WebpackError(webpack::Error),
 }
 
 #[derive(Default)]
@@ -54,22 +50,6 @@ pub struct TargetPackage {
     pub path: PathBuf,
 }
 
-fn export_main(js: &Path) -> Result<(), Error> {
-    let mut js_file = OpenOptions::new()
-        .append(true)
-        .open(js)
-        .map_err(Error::ExportMainError)?;
-    js_file
-        .write_all(
-            "export function main() {
-            wasm.main();
-        }"
-                .as_bytes(),
-        )
-        .map_err(Error::ExportMainError)?;
-    Ok(())
-}
-
 pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
     println!("wasm-bin: Starting cargo build step");
     let cargo_options = cargo::BuildOptions {
@@ -95,45 +75,21 @@ pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
     let artifacts = cargo::build(&cargo_options).map_err(Error::CargoBuildError)?;
 
     bindgen::install_if_required(Some(SKIP_PROMPT)).map_err(Error::BindgenError)?;
-    let mut bins = Vec::new();
-    let mut libs = Vec::new();
+    let mut targets = Vec::new();
     for a in artifacts {
-        let (binary, target, path) = match a {
-            WasmArtifact::Binary(target, path) => (true, target, path),
-            WasmArtifact::Library(target, path) => (false, target, path),
+        let (package_type, target, path) = match a {
+            WasmArtifact::Binary(target, path) => (PackageType::Binary, target, path),
+            WasmArtifact::Library(target, path) => (PackageType::Library, target, path),
         };
 
         println!("wasm-bin: Generate js bindings for target '{}'", target);
         let (mut js_out, _) = bindgen::generate(&target, &path).map_err(Error::BindgenError)?;
-        if binary {
-            export_main(&js_out)?;
-            js_out.pop();
-            bins.push((target, js_out));
-        } else {
-            libs.push((target, js_out));
-        }
-    }
-
-    webpack::install_if_required(SKIP_PROMPT).unwrap();
-
-    let mut targets = Vec::new();
-    for (target, path) in bins {
-        println!("wasm-bin: Package binary target '{}'", target);
-        let dir = webpack::package_bin(&target, &path).map_err(Error::WebpackError)?;
         targets.push(TargetPackage {
-            ty: PackageType::Binary,
+            ty: package_type,
             name: target,
-            path: dir,
+            path: js_out,
         });
     }
-    for (target, js_path) in libs {
-        println!("wasm-bin: Package library target '{}'", target);
-        let dir = webpack::package(&target, &js_path).map_err(Error::WebpackError)?;
-        targets.push(TargetPackage {
-            ty: PackageType::Library,
-            name: target,
-            path: dir,
-        });
-    }
+
     Ok(targets)
 }

@@ -8,8 +8,8 @@ use futures;
 use futures::future::FutureResult;
 use hyper;
 use hyper::header::ContentLength;
-use hyper::server::{Http, Request, Response, Service};
-use hyper::{Get, StatusCode};
+use hyper::server::{Http, Service};
+use hyper::{Body, Get, Request, Response, StatusCode};
 
 fn default_html_index(target: &str) -> String {
     return format!(
@@ -17,12 +17,19 @@ fn default_html_index(target: &str) -> String {
         <html>
             <head>
                 <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+                <script src='./{target}.js'></script>
+                <script>
+                    window.addEventListener('load', function() {{
+                        wasm_bindgen("./{target}_bg.wasm").then(function() {{
+                            wasm_bindgen.wasm.main();
+                        }});
+                    }}, false);
+                </script>
             </head>
             <body>
-                <script src='{}.js'></script>
             </body>
         </html>"#,
-        target
+        target = target
     );
 }
 
@@ -61,10 +68,10 @@ struct WebApp {
 }
 
 impl Service for WebApp {
-    type Request = Request;
-    type Response = Response;
+    type Request = Request<Body>;
+    type Response = Response<Body>;
     type Error = hyper::Error;
-    type Future = FutureResult<Response, hyper::Error>;
+    type Future = FutureResult<Self::Response, hyper::Error>;
 
     fn call(&self, req: Request) -> Self::Future {
         futures::future::ok(match (req.method(), req.path()) {
