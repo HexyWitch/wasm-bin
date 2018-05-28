@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 const BIN_TARGET_KIND_ID: &str = "bin";
+const EXAMPLE_TARGET_KIND_ID: &str = "example";
 const LIB_TARGET_KIND_ID: &str = "cdylib";
 
 #[derive(Debug)]
@@ -28,6 +29,7 @@ pub struct BuildOptions {
     pub lib: bool,
     pub bin: Option<String>,
     pub bins: bool,
+    pub example: Option<String>,
     pub all_targets: bool,
     pub release: bool,
     pub features: Option<String>,
@@ -57,10 +59,12 @@ impl<'de> de::Deserialize<'de> for PackageId {
         let mut s = string.splitn(3, ' ');
         Ok(PackageId {
             name: s.next().unwrap().to_string(),
-            version: s.next()
+            version: s
+                .next()
                 .ok_or_else(|| de::Error::custom("invalid PackageId"))?
                 .to_string(),
-            source_id: s.next()
+            source_id: s
+                .next()
                 .ok_or_else(|| de::Error::custom("invalid PackageId"))?
                 .to_string(),
         })
@@ -219,6 +223,9 @@ pub fn build(options: &BuildOptions) -> Result<Vec<WasmArtifact>, Error> {
     if options.bins {
         cmd.arg("--bins");
     }
+    if let Some(ref example) = options.example {
+        cmd.arg("--example").arg(example);
+    }
     if options.all_targets {
         cmd.arg("--all_targets");
     }
@@ -259,6 +266,7 @@ pub fn build(options: &BuildOptions) -> Result<Vec<WasmArtifact>, Error> {
     let mut artifacts = Vec::new();
     let mut errors = Vec::new();
     let bin_id = String::from(BIN_TARGET_KIND_ID);
+    let example_id = String::from(EXAMPLE_TARGET_KIND_ID);
     let lib_id = String::from(LIB_TARGET_KIND_ID);
     for line in stdout.lines() {
         let line = line.map_err(|e| Error::StdoutLineError(e))?;
@@ -287,7 +295,9 @@ pub fn build(options: &BuildOptions) -> Result<Vec<WasmArtifact>, Error> {
                 if artifact.filenames.len() != 1 {
                     return Err(Error::UnexpectedFileCountError);
                 }
-                if artifact.target.kind.contains(&bin_id) {
+                if artifact.target.kind.contains(&bin_id)
+                    || artifact.target.kind.contains(&example_id)
+                {
                     artifacts.push(WasmArtifact::Binary(
                         artifact.target.name,
                         artifact.filenames.pop().unwrap(),

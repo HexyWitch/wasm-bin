@@ -37,6 +37,11 @@ fn shared_args<'a, 'b>() -> Vec<Arg<'a, 'b>> {
         Arg::with_name("release")
             .long("release")
             .help("Build artifacts in release mode, with optimizations"),
+        Arg::with_name("example")
+            .long("example")
+            .value_name("NAME")
+            .help("Build only the specified example")
+            .takes_value(true),
         Arg::with_name("features")
             .long("features")
             .value_name("FEATURES")
@@ -108,6 +113,7 @@ fn build_options(matches: &ArgMatches) -> build::Options {
         lib: matches.is_present("lib"),
         bin: matches.value_of("bin").map(String::from),
         bins: matches.is_present("bins"),
+        example: matches.value_of("example").map(String::from),
         all_targets: matches.is_present("all-targets"),
         release: matches.is_present("release"),
         features: matches.value_of("features").map(String::from),

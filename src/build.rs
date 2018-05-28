@@ -26,6 +26,7 @@ pub struct Options {
     pub lib: bool,
     pub bin: Option<String>,
     pub bins: bool,
+    pub example: Option<String>,
     pub all_targets: bool,
     pub release: bool,
     pub features: Option<String>,
@@ -39,11 +40,13 @@ pub struct Options {
     pub cargo_flags: Option<String>,
 }
 
+#[derive(Debug)]
 pub enum PackageType {
     Binary,
     Library,
 }
 
+#[derive(Debug)]
 pub struct TargetPackage {
     pub ty: PackageType,
     pub name: String,
@@ -60,6 +63,7 @@ pub fn build(options: &Options) -> Result<Vec<TargetPackage>, Error> {
         lib: options.lib.clone(),
         bin: options.bin.clone(),
         bins: options.bins.clone(),
+        example: options.example.clone(),
         all_targets: options.all_targets.clone(),
         release: options.release.clone(),
         features: options.features.clone(),
