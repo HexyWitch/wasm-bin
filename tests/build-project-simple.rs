@@ -25,7 +25,7 @@ fn build_project_simple() {
             [workspace]
 
             [dependencies]
-            wasm-bindgen = "*"
+            wasm-bindgen = "0.2"
         "#,
         )
         .file(
